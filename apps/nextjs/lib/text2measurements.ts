@@ -1,5 +1,17 @@
 import { Measurement } from "@/types/models/Measurement";
+<<<<<<< Updated upstream
 import {textCompletion} from "@/lib/llm";
+=======
+
+// Create an OpenAI API client (that's edge-friendly!)
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY || '',
+});
+
+
+// IMPORTANT! Set the runtime to edge
+export const runtime = 'edge';
+>>>>>>> Stashed changes
 
 export function generateText2MeasurementsPrompt(statement: string,
                                                 localDateTime: string | null | undefined): string {
@@ -193,8 +205,25 @@ The following is the user request translated into a JSON object with 2 spaces of
 export async function text2measurements(statement: string,
                                         localDateTime: string | null | undefined): Promise<Measurement[]> {
   const promptText = generateText2MeasurementsPrompt(statement, localDateTime);
+<<<<<<< Updated upstream
   const str = await textCompletion(promptText, "json_object");
   const json = JSON.parse(str);
+=======
+  console.log(openai.apiKey);
+  // Ask OpenAI for a streaming chat completion given the prompt
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4-turbo',
+    stream: false,
+    //max_tokens: 150,
+    messages: [
+      {"role": "system", "content": `You are a helpful assistant that translates user requests into JSON objects`},
+      {role: "user", "content": promptText},
+    ],
+    response_format: { type: "json_object" },
+  });
+
+  // Convert the response into an array of Measurement objects
+>>>>>>> Stashed changes
   const measurements: Measurement[] = [];
   json.measurements.forEach((measurement: Measurement) => {
     measurements.push(measurement);
