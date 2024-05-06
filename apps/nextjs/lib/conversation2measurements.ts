@@ -43,7 +43,7 @@ Also, after asking each question and getting a response, check if there's anythi
 
 Your responses should be in JSON format and have 2 properties called data and message.  The message property should contain the message to the user.  The data property should contain an array of measurement objects created from the last user response.
 
-
+conversation2MeasurementsPrompt
 ${previousStatements ? `The following are the previous statements:
 ${previousStatements}` : ''}
 
@@ -56,9 +56,16 @@ The following is the user request translated into a JSON object with 2 spaces of
 `;
 }
 
+// question: should the conversion to json happen after entire conversation?
+
 export async function conversation2measurements(statement: string,
                                         localDateTime: string | null | undefined,
                                                 previousStatements: string | null | undefined): Promise<Measurement[]> {
+                                  
+  
+
+  console.log(statement);
+  
   let promptText = conversation2MeasurementsPrompt(statement, localDateTime, previousStatements);
   const maxTokenLength = 1500;
   if(promptText.length > maxTokenLength) {
@@ -66,11 +73,17 @@ export async function conversation2measurements(statement: string,
     promptText = promptText.slice(0, maxTokenLength);
 
   }
+ 
   const str = await textCompletion(promptText, "json_object");
+
   const measurements: Measurement[] = [];
+  console.log("---checking string---");
+  console.log(str);
   let jsonArray = JSON.parse(str);
-  jsonArray.measurements.forEach((measurement: Measurement) => {
+
+    jsonArray.data.forEach((measurement: Measurement) => {
     measurements.push(measurement);
   });
-  return measurements;
+  const question = jsonArray.message;
+  return {measurements, question};
 }

@@ -11,6 +11,8 @@ type Message = {
   text: string;
   time: string;
 };
+export const pastStatements: string[] = [];
+
 
 const App: React.FC = () => {
   const [input, setInput] = useState<string>('');
@@ -19,6 +21,8 @@ const App: React.FC = () => {
 
   const sendMessage = async () => {
     if (input.trim()) {
+      const pastStatementsString = pastStatements.join(';');
+
       const localDateTime = new Date().toISOString(); // Get current date and time in ISO format
       setMessages([...messages, { type: 'user', text: input, time: localDateTime }, { type: 'loading', text: 'Loading...', time: localDateTime }]);
       setIsLoading(true);
@@ -27,12 +31,15 @@ const App: React.FC = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ text: input, localDateTime }), // Include localDateTime in the request body
+        body: JSON.stringify({ statement: input, localDateTime, pastStatementsString}), // Include localDateTime in the request body
       });
       const data = await response.json();
       setMessages(prevMessages => prevMessages.filter(msg => msg.type !== 'loading').concat({ type: 'response', text: JSON.stringify(data), time: localDateTime }));
       setIsLoading(false);
       setInput('');
+      pastStatements.push(input);
+
+
     }
   };
 
@@ -50,7 +57,7 @@ const App: React.FC = () => {
     <Shell>
       <DashboardHeader
         heading="Voice 2 Measurements"
-        text="Tell us what foods, medications, supplements you took or tell me about your symptoms and I'll convert it to structured data."
+        text="Start with 'Hello robot!'. Tell us what foods, medications, supplements you took or tell me about your symptoms and I'll convert it to structured data."
       />
       <div className="flex flex-col h-full">
         <div className="flex-grow overflow-auto">
