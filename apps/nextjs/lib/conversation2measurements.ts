@@ -1,18 +1,20 @@
-import { Measurement } from "@/types/models/Measurement";
+import {Measurement} from "@/types/models/Measurement";
 import {textCompletion} from "@/lib/llm";
+import {convertToLocalDateTime, getUtcDateTime} from "@/lib/dateTimeWithTimezone";
+import {text2measurements} from "@/lib/text2measurements";
 
 // IMPORTANT! Set the runtime to edge
 export const runtime = 'edge';
 
 export function conversation2MeasurementsPrompt(statement: string,
-                                                localDateTime: string | null | undefined,
+                                                utcDateTime: string | null | undefined,
+                                                timeZoneOffset: number | null | undefined,
                                                 previousStatements: string | null | undefined): string {
 
 
-  if(!localDateTime) {
-    const now = new Date();
-    localDateTime = now.toISOString().slice(0, 19);
-  }
+  if(!utcDateTime) {utcDateTime = getUtcDateTime();}
+  let localDateTime = utcDateTime;
+  if(timeZoneOffset) {localDateTime = convertToLocalDateTime(utcDateTime, timeZoneOffset);}
   return `
 You are a robot designed to collect diet, treatment, and symptom data from the user.
 
@@ -59,14 +61,19 @@ The following is the user request translated into a JSON object with 2 spaces of
 // question: should the conversion to json happen after entire conversation?
 
 export async function conversation2measurements(statement: string,
-                                        localDateTime: string | null | undefined,
+                                        utcDateTime: string | null | undefined,
+                                                timeZoneOffset: number | null | undefined,
                                                 previousStatements: string | null | undefined): Promise<Measurement[]> {
+<<<<<<< HEAD
                                   
   
 
   console.log(statement);
   
   let promptText = conversation2MeasurementsPrompt(statement, localDateTime, previousStatements);
+=======
+  let promptText = conversation2MeasurementsPrompt(statement, utcDateTime, timeZoneOffset, previousStatements);
+>>>>>>> upstream/develop
   const maxTokenLength = 1500;
   if(promptText.length > maxTokenLength) {
     // truncate to less than 1500 characters
@@ -86,4 +93,40 @@ export async function conversation2measurements(statement: string,
   });
   const question = jsonArray.message;
   return {measurements, question};
+}
+
+export async function getNextQuestion(currentStatement: string, previousStatements: string | null | undefined): Promise<string> {
+  let promptText = `
+  You are a robot designed to collect diet, treatment, and symptom data from the user.
+
+Immediately begin asking the user the following questions
+- What did you eat today?
+- What did you drink today?
+- What treatments did you take today?
+- Rate all your symptoms on a scale of 1 to 5.
+
+Also, after asking each question and getting a response, check if there's anything else the user want to add to the first question response. For instance, after getting a response to "What did you eat today?", your next question should be, "Did you eat anything else today?".  If they respond in the negative, move on to the next question.
+
+Here is the current user statement:
+  ${currentStatement}
+
+  Here are the previous statements in the conversation: ${previousStatements}
+  `;
+
+  return await textCompletion(promptText, "text");
+}
+
+export async function haveConversation(statement: string,
+                                       utcDateTime: string,
+                                       timeZoneOffset: number,
+                                       previousStatements: string | null | undefined): Promise<{
+  questionForUser: string;
+  measurements: Measurement[]
+}> {
+  let questionForUser = await getNextQuestion(statement,  previousStatements);
+  const measurements = await text2measurements(statement, utcDateTime, timeZoneOffset);
+  return {
+    questionForUser,
+    measurements
+  }
 }
