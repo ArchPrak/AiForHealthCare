@@ -30,3 +30,10 @@ export function convertToLocalDateTime(utcDateTime: string | number | Date, time
   const localDate = new Date(utcDate.getTime() - timeZoneOffset * 60 * 60 * 1000);
   return localDate.toISOString();
 }
+
+
+export function convertToLocalDateTime(utcDateTime: string | number | Date, timeZoneOffset: number){
+  const utcDate = new Date(utcDateTime);
+  const localDate = new Date(utcDate.getTime() - timeZoneOffset * 60 * 60 * 1000);
+  return localDate.toISOString();
+}

@@ -206,7 +206,11 @@ export async function text2measurements(statement: string,
   return measurements;
 <<<<<<< HEAD
 }
+<<<<<<< HEAD
 =======
 }
+
+>>>>>>> upstream/develop
+=======
 
 >>>>>>> upstream/develop
